@@ -4,6 +4,7 @@
         <div v-if="products.length > 0">
             <CartItem 
                 v-for="product in products"
+                @remove-from-cart="$emit('remove-from-cart', $event)"
                 :key="product.id"
                 class="product-container"
                 :product="product" />

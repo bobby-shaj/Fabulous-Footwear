@@ -1,13 +1,31 @@
 <template>
   <div id="page-wrap" v-if="product">
-      <div id="img-wrap">
-        <img :src="product.imageUrl"/>
-      </div>
+    <div id="img-wrap">
+      <img :src="product.imageUrl"/>
+    </div>
     <div id="product-details">
       <h1> {{product.name}}</h1>
       <h3 id="price">${{product.price}}</h3>
       <p>Average rating: {{product.averageRating}}</p>
-      <button id="add-to-cart">Add to Cart</button>
+      <div v-if="!isAlreadyInCart">
+      <button 
+        id="add-to-cart"
+        v-if="!showSuccessMessage"
+        v-on:click="addToCart"
+      >Add to Cart</button>
+      <button 
+        id="add-to-cart"
+        class="green-button"
+        v-if="showSuccessMessage"
+        v-on:click="addToCart"
+      >Successfully added item to cart!</button>
+      </div>
+      <button 
+        id="add-to-cart"
+        v-else
+        class="inCart-button"
+      >Item already in Cart</button>
+
       <h4>Description</h4>
       <p>{{product.description}}</p>
     </div>
@@ -16,7 +34,7 @@
 </template>
 
 <script>
-import {products} from '../fake-data';
+import axios from 'axios'; 
 import NotFoundPage from './NotFoundPage';
 
 export default {
@@ -26,8 +44,38 @@ export default {
     },
     data() {
       return {
-        product: products.find((p) => p.id === this.$route.params.id),
+        //product: products.find((p) => p.id === this.$route.params.id),
+        product: {},
+        showSuccessMessage: false,
+        isAlreadyInCart: false,
+        cartItems: [], 
       }
+    },
+    methods: {
+      async addToCart() {
+        await axios.post('/api/users/12345/cart', {
+          productId: this.$route.params.id,
+        });
+        this.showSuccessMessage = true; 
+        setTimeout(() => {
+          this.$router.push('/products');
+        }, 1500);
+      }
+    },
+    async created() {
+      let result = await axios.get(`/api/products/${this.$route.params.id}`);
+      const product = result.data;
+      this.product = product; 
+
+      result = await axios.get('/api/users/12345/cart');
+      const cartItems = result.data;
+      this.cartItems = cartItems;
+      cartItems.forEach(element => {
+        if(element.id === product.id){
+          this.isAlreadyInCart = true; 
+        }
+      });
+
     }
 }
 </script>
@@ -45,6 +93,16 @@ export default {
 
   img {
     width: 400px;
+  }
+
+  .green-button {
+    background-color: green;
+  }
+
+  .inCart-button {
+    background: #999;
+    color: #555;
+    cursor: not-allowed;
   }
 
   #product-details {

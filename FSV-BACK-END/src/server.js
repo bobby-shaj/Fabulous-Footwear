@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {MongoClient} from 'mongodb';
+import path from 'path';
 
 const products = [{
     id: '123',
@@ -99,6 +100,7 @@ const products = [{
 const app = express();
 app.use(bodyParser.json());
 
+app.use('/images', express.static(path.join(__dirname, '../assets')));
 app.get('/hello', (req, res) => {
     res.send('Hello!');
 });
@@ -167,6 +169,8 @@ app.post('/api/users/:userId/cart', async(req, res) => {
   await db.collection('users').updateOne({id: userId}, 
     {$addToSet: { cartItems: productId},});
   const user = await db.collection('users').findOne({id: userId});
+  const products = await db.collection('products').find({}).toArray(); 
+
   const cartItemIds = user.cartItems;
   const cartItems = cartItemIds.map(id => 
     products.find(product => product.id === id));
